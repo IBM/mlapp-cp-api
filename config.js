@@ -3,15 +3,13 @@ require('dotenv').config()
 Global application configuration file. This file should be modified at the beginning of a new project
 */
 
-// Please customize the following attributes for your project
-
 // Versioning
-var build = "1.0.6"; // should be updated over time by the developers as they perform releases. We use IBM's standard versioning schema. For example, 18.2.5.1 indicates major release 5, minor release 1 in 2nd Quarter 2018.
+var build = "0.1.0";
 
 // Basic information
-var appName = "RAD-ML NODE"; 
-var appAbv = "RADMLN"
-var domain = "https://radmldemo.eu-gb.containers.appdomain.cloud";
+var appName = "MLAPP Control Panel - API"; 
+var appAbv = "mlapp-cp-api"
+var domain = "";
 
 // Do not modify information below unless you know what you are doing!
 global_config = {
