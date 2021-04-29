@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radml-test-nodejs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radml-test-nodejs
+  template:
+    metadata:
+      labels: # labels to select/identify the deployment
+        app: radml-test-nodejs 
+    spec:     # pod spec                  
+      containers: 
+      - name: radml-test-nodejs
+        imagePullPolicy: Always
+        image: us.icr.io/radml2/radml-test-nodejs:latest 
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CORS
+          value: "<URL_TO_FRONTEND>"
+        - name: DB_ADAPTER
+          value: "postgres"
+        - name: DB_TYPE
+          value: "knex"
+        - name: DB_HOST
+          value: "<POSTGRESQL_HOST>"
+        - name: DB_NAME
+          value: "<POSTGRES_DB_NAME>"
+        - name: DB_USER
+          value: "<POSTGRES_USER>"
+        - name: DB_PASSWORD
+          value: "<POSTGRES_PASSWORD>"
+        - name: DB_PORT
+          value: "<POSTGRES_PORT>"                   
+        - name: DB_SSL
+          value: "<POSTGRESS_IS_SSL>"
+        - name: MQ_TYPE
+          value: "rabbitmq"                   
+        - name: MQ_ENDPOINT
+          value: "<PATH_TO_RABBITMQ_INCLUDE_CREDENTIALS_AND_PORT>"
+        - name: MQ_CERT_TEXT
+          value: "<MQ_CERT_BASE_64>"
+        - name: FS_TYPE
+          value: "ibm-cos-sdk"  
+        - name: BOTO_IBM_BOTO3_ENDPOINT
+          value: "https://s3.us-south.cloud-object-storage.appdomain.cloud"
+        - name: BOTO_IBM_BOTO3_API_KEY_ID
+          value: "<BOTO_API_KEY_ID>"
+        - name: BOTO_IBM_BOTO3_SERVICE_INSTANCE_ID
+          value: "<BOTO_SERVICE_INSTANCE_ID>"
+        - name: SESSION_TYPE
+          value: "redis"
+        - name: REDIS_HOST
+          value: "<REDIT_HOST>"                                  
+        - name: REDIS_PORT
+          value: "<REDIT_PORT>"                                  
+        - name: REDIS_CERT_TEXT
+          value: "<REDIT_CERT_BASE_64>"
+        - name: REDIS_PASSWORD
+          value: "<REDIS_PASSWORD>"
+        - name: APP_LOGIN_REQUIRED
+          value: "true"
+        - name: APP_LOGIN_TYPE
+          value: "basic"               
+        - name: CLIENT_API_TOKEN
+          value: "<API_TOKEN>"   
+        - name: SEND_ANALYSIS_TOPIC
+          value: analysis_listen 
+        - name: APP_PKEY
+          value: <RANDOM_KEY>
+        - name: APP_IS_HTTPS
+          value: "false"
+        ports:
+        - containerPort: 3000
