@@ -1,5 +1,7 @@
 const global_config = require('./../config')
 const message_queue = require('./../utilities/handlers/'+global_config["message_queue"].type+'-queue-handler');
+const email_handler = require('./../utilities/handlers/'+global_config["email"].type+'-handler');
+
 const jobs_store = require('./../stores/'+global_config["database"].type+'/jobs.store');
 const schedules_store = require('./../stores/'+global_config["database"].type+'/schedules.store');
 const models_store = require('./../stores/'+global_config["database"].type+'/models.store');
@@ -12,10 +14,16 @@ const environments_store = require('./../stores/'+global_config["database"].type
 var queues_for_send = global_config.message_queue.send_analysis_topic;
 var queue_for_logs = global_config.message_queue.analysis_logs;
 
-const sgMail = require('@sendgrid/mail')
-if(global_config.mail_api_key){
-    sgMail.setApiKey(global_config.mail_api_key);
+var enumCondition = {
+    "LESS THAN": "<",
+    "GREATER THAN": ">",
+    "EQUALS": "="
 }
+
+// const sgMail = require('@sendgrid/mail')
+// if(global_config.mail_api_key){
+//     sgMail.setApiKey(global_config.mail_api_key);
+// }
 
 var Q = require('q');
 
@@ -120,33 +128,34 @@ var onMessageCallback = function(msg, ack){
     
         if (msg.status_code == 100 && job_from_db.schedule_id){
             var schedule_obj = await schedules_store.getScheduleById(job_from_db.schedule_id);
-            var action = JSON.parse(schedule_obj[0].schedule_conf.action);
-            var model = await models_store.getModelById(model_id);
-            for (var i=0;i<action.length;i++){
-                var actions = action[i].actions;
-                var conditions = action[i].conditions;
-                var condition_exists = (conditions.operator == "AND") ? true : false;
-                for (var j=0;j<conditions.list.length;j++){
-                    var condition=conditions.list[j];
-                    if(eval(model[0].metadata.models.scores[condition.key]+condition.condition+condition.value)){
-                        if(conditions.operator == "OR"){
-                            condition_exists = true;
-                            break;
-                        }
-                    }
-                    else{
-                        if(conditions.operator == "AND"){
+            if (schedule_obj[0].schedule_conf.trigger){
+                var trigger = JSON.parse(schedule_obj[0].schedule_conf.trigger);
+                var model = await models_store.getModelById(model_id);
+                for (var i=0;i<trigger.length;i++){
+                    var conditions = trigger[i].conditions;
+                    var condition_exists = true;
+                    for (var j=0;j<conditions.list.length;j++){
+                        var condition=conditions.list[j];
+                        if(! eval(model[0].metadata.models.scores[condition.key]+enumCondition[condition.condition]+condition.value)){                            
                             condition_exists = false;
                             break;
                         }
                     }
-                }
-                if (condition_exists){
-                    for (var j=0;j<actions.length;j++){
-                        var action = actions[j];
+                    if (condition_exists){
+                        var triggers = trigger[i].triggers;
+                        for (var j=0;j<triggers.length;j++){
+                            var action = triggers[j];
+                            if (action.type == "email"){
+                                var str = JSON.stringify({
+                                    name: schedule_obj[0].name,
+                                    trigger: trigger[i]
+                                })
+                                email_handler.sendMail("Scheduler " + schedule_obj[0].name, str, str);
+                            }
+                        }
                     }
                 }
-            }
+            }            
         }
 
         jobs_store.updateJob(job_id, updates_for_job).then(function() {

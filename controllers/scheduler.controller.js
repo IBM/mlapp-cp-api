@@ -140,7 +140,7 @@ function refreshCronJobs(){
         
         for (var i=0;i<all_schedules.length;i++){            
             setTimeout(function(x) { return function() { 
-                all_schedules[x].config.environment = "prod";
+                all_schedules[x].config.env = "default";
                 if (all_schedules[x].schedule_conf.command){
                     //command
                     try{

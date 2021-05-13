@@ -117,6 +117,20 @@ global_config = {
 			}[process.env.MQ_TYPE];			
 		})()
 	},
+	"email": {
+		"type": process.env.EMAIL_TYPE,
+		"settings": (function(){			
+			return {
+				'sendgrid': {
+					"mail_api_key": process.env.MAIL_API_KEY
+				},
+				'gmail': {
+					"username": process.env.MAIL_USER,
+					"password": process.env.MAIL_PASS
+				}
+			}[process.env.EMAIL_TYPE];			
+		})()
+	},
 	"session":{
 		"type": process.env.SESSION_TYPE,
 		"settings": (function(){			
@@ -138,7 +152,6 @@ global_config = {
 			{type: "get", path: "/endpoint/send-message/:env?", method: "send_message_await_response"}
 		]
 	},
-	"mail_api_key": process.env.MAIL_API_KEY,
 	"login_required": process.env.APP_LOGIN_REQUIRED ? (process.env.APP_LOGIN_REQUIRED == "true") : true,
 	"is_https": process.env.APP_IS_HTTPS ? (process.env.APP_IS_HTTPS == "true") : false,
 	"login_type": process.env.APP_LOGIN_TYPE || "basic",
