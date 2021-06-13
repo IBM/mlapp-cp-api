@@ -1,6 +1,6 @@
 const global_config = require('./../config')
 const message_queue = require('./../utilities/handlers/'+global_config["message_queue"].type+'-queue-handler');
-const email_handler = require('./../utilities/handlers/'+global_config["email"].type+'-handler');
+const email_handler = global_config["email"].type ? require('./../utilities/handlers/'+global_config["email"].type+'-handler') : null;
 
 const jobs_store = require('./../stores/'+global_config["database"].type+'/jobs.store');
 const schedules_store = require('./../stores/'+global_config["database"].type+'/schedules.store');
@@ -145,7 +145,7 @@ var onMessageCallback = function(msg, ack){
                         var triggers = trigger[i].triggers;
                         for (var j=0;j<triggers.length;j++){
                             var action = triggers[j];
-                            if (action.type == "email"){
+                            if (email_handler && action.type == "email"){
                                 var str = JSON.stringify({
                                     name: schedule_obj[0].name,
                                     trigger: trigger[i]
