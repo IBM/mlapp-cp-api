@@ -4,12 +4,13 @@ var Q = require('q');
 var minioClient = new Minio.Client(global_config.filestore.settings);
 
 function downloadFile(fileName, bucket, path) {
+    bucket = global_config.filestore.settings.bucket; // hard code bucket from config
     var deferred = Q.defer();
     // Using fPutObject API upload your file to the bucket.
     try{
         minioClient.bucketExists(bucket, function(res) {
             if (res && res.code == "NotFound"){
-                minioClient.makeBucket(bucket, 'us-east-1', function(err) {
+                minioClient.makeBucket(bucket, global_config.filestore.settings.region, function(err) {
                     if (err) return console.log(err)            
                     console.log('Bucket created successfully.')
                     innerDownloadFile(fileName, bucket, path).then(function(result) {
@@ -53,12 +54,13 @@ function innerDownloadFile(filename, bucket, path) {
 }
 
 function uploadFile(file, bucket) {
+    bucket = global_config.filestore.settings.bucket; // hard code bucket from config
     var deferred = Q.defer();
     // Using fPutObject API upload your file to the bucket.
     try{
         minioClient.bucketExists(bucket, function(res) {
             if (res && res.code == "NotFound"){
-                minioClient.makeBucket(bucket, 'us-east-1', function(err) {
+                minioClient.makeBucket(bucket, global_config.filestore.settings.region, function(err) {
                     if (err) return console.log(err)            
                     console.log('Bucket created successfully.')
                     innerUploadFile(file.filename, file.destination+file.filename, bucket).then(function(result) {
@@ -104,39 +106,23 @@ function innerUploadFile(filename, path, bucket) {
 
 function queryFileStorage(prefix){
     var deferred = Q.defer();
-    minioClient.listBuckets(function(err, buckets) {
-        if (err) {
-            deferred.reject(err);
+    var stream = minioClient.listObjectsV2(global_config.filestore.settings.bucket, prefix, false, '');
+    results = {}
+    stream.on('data', function(file) {
+        let file_type = file.name.split('.')[1];
+        if (!(file_type in results)){
+            results[file_type] = []
         }
-        
-        var promises = [];
-        var results = {};
-
-        for(var i=0; i < buckets.length; i++){
-            promises.push(new Promise((resolve, reject) => {
-                var current_i = i;
-                var stream = minioClient.listObjectsV2(buckets[current_i].name, prefix, false, '');
-                results[buckets[current_i].name] = []
-                stream.on('data', function(file) {
-                    results[buckets[current_i].name].push({
-                        file_name: file.name,
-                        last_modified: file.lastModified
-                    });
-                });
-                stream.on('end', function(){
-                    resolve();
-                });
-                stream.on('error', function(){
-                    reject();
-                });
-            }));
-        }
-        Promise.all(promises).then(function(){
-            deferred.resolve(results);
+        results[file_type].push({
+            file_name: file.name,
+            last_modified: file.lastModified
         })
-        .catch(function(err){
-            deferred.reject(err);
-        });
+    });
+    stream.on('end', function(){
+        deferred.resolve(results);
+    });
+    stream.on('error', function(){
+        deferred.reject();
     });
     return deferred.promise;
 }

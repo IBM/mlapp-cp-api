@@ -25,6 +25,7 @@ function downloadFile(fileName, bucket, path) {
 }
 
 function innerDownloadFile(filename, bucket_name, path) {
+    bucket_name = global_config.filestore.settings.bucket; // hard code bucket from config
     var deferred = Q.defer();
     var fullPath = __dirname + "/../.." + path;
     
@@ -49,12 +50,13 @@ function innerDownloadFile(filename, bucket_name, path) {
 }
 
 function uploadFile(file, bucket) {
+    bucket = global_config.filestore.settings.bucket; // hard code bucket from config
     var deferred = Q.defer();
     // Using fPutObject API upload your file to the bucket.
     try{
         s3.bucketExists(bucket, function(res) {
             if (res && res.code == "NotFound"){
-                s3.makeBucket(bucket, 'us-east-2', function(err) {
+                s3.makeBucket(bucket, global_config.filestore.settings.region, function(err) {
                     if (err) return console.log(err)            
                     console.log('Bucket created successfully.')
                     innerUploadFile(file.filename, file.destination+file.filename, bucket).then(function(result) {
@@ -100,49 +102,27 @@ function innerUploadFile(filename, path, bucket) {
 
 function queryFileStorage(prefix){
     var deferred = Q.defer();
-    s3.listBuckets(function(err, res) {
-        var buckets = res.Buckets;
+    const s3params = {
+        Bucket: global_config.filestore.settings.bucket,
+        Prefix: prefix,
+    };
+    
+    results = []
+    s3.listObjectsV2 (s3params, (err, stream) => {
         if (err) {
-            deferred.reject(err);
+            deferred.reject (err);
         }
-        
-        var promises = [];
-        var results = {};
 
-        for(var i=0; i < buckets.length; i++){
-            promises.push(new Promise((resolve, reject) => {
-                var current_i = i;
-
-                const s3params = {
-                    Bucket: buckets[current_i].Name,
-                    Prefix: prefix,
-                };
-                
-                results[buckets[current_i].Name] = []
-                s3.listObjectsV2 (s3params, (err, stream) => {
-                    if (err) {
-                        reject (err);
-                    }
-
-                    for (var j=0;j<stream.Contents.length;j++){
-                        results[buckets[current_i].Name].push({
-                            file_name: stream.Contents[j].Key,
-                            last_modified: stream.Contents[j].LastModified
-                        });
-                    }
-                        
-                    resolve();
-
-                });                
-            }));
+        for (var j=0;j<stream.Contents.length;j++){
+            results.push({
+                file_name: stream.Contents[j].Key,
+                last_modified: stream.Contents[j].LastModified
+            });
         }
-        Promise.all(promises).then(function(){
-            deferred.resolve(results);
-        })
-        .catch(function(err){
-            deferred.reject(err);
-        });
-    });
+            
+        defered.resolve();
+
+    });                
     return deferred.promise;
 }
 

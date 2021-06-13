@@ -68,23 +68,31 @@ global_config = {
 					accessKey: process.env.FS_ACCESSKEY,
 					secretKey: process.env.FS_SECRETKEY,
 					port: parseInt(process.env.FS_PORT),
-					useSSL: false
+					useSSL: false,
+					bucket: process.env.FS_BUCKET_NAME,
+					region: process.env.FS_REGION || 'us-east-1'
 				},
 				'azure-blob': {
 					storageAccount: process.env.FS_STORAGE_ACCOUNT,
-					storageAccessKey: process.env.FS_ACCESSKEY
+					storageAccessKey: process.env.FS_ACCESSKEY,
+					bucket: process.env.FS_BUCKET_NAME,
+					region: process.env.FS_REGION || 'us-east-1'
 				},
 				'aws': {
 					endPoint: process.env.FS_ENDPOINT,
 					accessKey: process.env.FS_ACCESSKEY,
 					secretKey: process.env.FS_SECRETKEY,
-					port: parseInt(process.env.FS_PORT)
+					port: parseInt(process.env.FS_PORT),
+					bucket: process.env.FS_BUCKET_NAME,
+					region: process.env.FS_REGION || 'us-east-1'
 				},
 				'ibm-cos-sdk': {
 					endpoint: process.env.BOTO_IBM_BOTO3_ENDPOINT,
 					apiKeyId: process.env.BOTO_IBM_BOTO3_API_KEY_ID,
 					ibmAuthEndpoint: 'https://iam.cloud.ibm.com/identity/token',
 					serviceInstanceId: process.env.BOTO_IBM_BOTO3_SERVICE_INSTANCE_ID,
+					bucket: process.env.FS_BUCKET_NAME,
+					region: process.env.FS_REGION || 'us-east-1'
 				}
 			}[process.env.FS_TYPE];			
 		})()
