@@ -120,7 +120,7 @@ function queryFileStorage(prefix){
             });
         }
             
-        deferred.resolve();
+        deferred.resolve(results);
 
     });                
     return deferred.promise;
